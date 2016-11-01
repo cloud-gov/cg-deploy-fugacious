@@ -1,7 +1,6 @@
 applications:
 - name: fugacious
-  domain: fugacious.18f.gov
-  no-hostname: true
+  domain: 18f.gov
   buildpack: ruby_buildpack
   command: bin/cf-start
   services:
