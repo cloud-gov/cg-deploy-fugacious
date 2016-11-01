@@ -1,0 +1,77 @@
+---
+jobs:
+- name: push-fugacious
+  plan:
+  - aggregate:
+    - get: fugacious-src
+      trigger: true
+    - get: fugacious-config
+      trigger: true
+  - aggregate:
+    - put: fugacious-deploy
+      params:
+        path: fugacious-src
+        current_app_name: fugacious
+        manifest: fugacious-config/manifest-app.yml
+        environment_variables:
+          SECRET_KEY_BASE: {{secret-key-base}}
+          MAX_RETENTION_HOURS: {{max-retention-hours}}
+    - put: fugacious-deploy
+      params:
+        path: fugacious-src
+        current_app_name: fugacious-worker
+        manifest: fugacious-config/manifest-worker.yml
+        environment_variables:
+          SECRET_KEY_BASE: {{secret-key-base}}
+          MAX_RETENTION_HOURS: {{max-retention-hours}}
+  on_failure:
+    put: slack
+    params:
+      text: |
+        :x: FAILED to deploy fugacious on {{cf-api-url}}
+        <$ATC_EXTERNAL_URL/teams/$BUILD_TEAM_NAME/pipelines/$BUILD_PIPELINE_NAME/jobs/$BUILD_JOB_NAME/builds/$BUILD_NAME|View build details>
+      channel: {{slack-channel}}
+      username: {{slack-username}}
+      icon_url: {{slack-icon-url}}
+  on_success:
+    put: slack
+    params:
+      text: |
+        :white_check_mark: Successfully deployed fugacious on {{cf-api-url}}
+        <$ATC_EXTERNAL_URL/teams/$BUILD_TEAM_NAME/pipelines/$BUILD_PIPELINE_NAME/jobs/$BUILD_JOB_NAME/builds/$BUILD_NAME|View build details>
+      channel: {{slack-channel}}
+      username: {{slack-username}}
+      icon_url: {{slack-icon-url}}
+
+resources:
+- name: fugacious-src
+  type: git
+  source:
+    uri: {{fugacious-git-url}}
+    branch: {{fugacious-git-branch}}
+
+- name: fugacious-config
+  type: git
+  source:
+    uri: {{fugacious-config-git-url}}
+    branch: {{fugacious-config-git-branch}}
+
+- name: fugacious-deploy
+  type: cf
+  source:
+    api: {{cf-api-url}}
+    username: {{cf-deploy-username}}
+    password: {{cf-deploy-password}}
+    organization: {{cf-organization}}
+    space: {{cf-space}}
+
+- name: slack
+  type: slack-notification
+  source:
+    url: {{slack-webhook-url}}
+
+resource_types:
+- name: slack-notification
+  type: docker-image
+  source:
+    repository: cfcommunity/slack-notification-resource

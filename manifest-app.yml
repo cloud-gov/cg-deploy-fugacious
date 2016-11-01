@@ -1,0 +1,14 @@
+applications:
+- name: fugacious
+  domain: fugacious.18f.gov
+  no-hostname: true
+  buildpack: ruby_buildpack
+  command: bin/cf-start
+  services:
+  - postgres
+  - redis
+env:
+  BUNDLE_WITHOUT: development:devops:test
+  RAILS_SERVE_STATIC_FILES: true
+  RAILS_ENV: production
+  RACK_ENV: production
