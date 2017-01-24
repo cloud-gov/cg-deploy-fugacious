@@ -1,11 +1,23 @@
 ---
 jobs:
-- name: push-fugacious
+- name: test-fugacious
   plan:
   - aggregate:
     - get: fugacious-src
       trigger: true
     - get: fugacious-config
+      trigger: true
+  - task: run-tests
+    file: fugacious-config/run-tests.yml
+
+- name: push-fugacious
+  plan:
+  - aggregate:
+    - get: fugacious-src
+      passed: [test-fugacious]
+      trigger: true
+    - get: fugacious-config
+      passed: [test-fugacious]
       trigger: true
   - aggregate:
     - put: fugacious-deploy
