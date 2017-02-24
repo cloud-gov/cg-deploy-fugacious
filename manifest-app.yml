@@ -1,5 +1,6 @@
 applications:
 - name: fugacious
+  instances: 2
   domain: 18f.gov
   buildpack: ruby_buildpack
   command: bin/cf-start
